@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>E-Football AI</title>
+  <style>
+    body { font-family: Arial; background: #111; color: white; padding: 20px; }
+    .card { background: #222; padding: 20px; margin: 10px; border-radius: 12px; }
+    button { background: #00ff88; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>E-Football AI Tahminleri</h1>
+  <button onclick="predict()">Bugünün Over 2.5 Tahminleri</button>
+  <div id="results"></div>
+
+  <script>
+  async function predict() {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "over 2.5" })
+    });
+    const data = await res.json();
+    document.getElementById("results").innerHTML = data.matches.map(m => `
+      <div class="card">
+        <h3>${m.home} vs ${m.away}</h3>
+        <p><strong>${m.prediction}: ${m.probability}%</strong></p>
+        <p>${m.reasoning}</p>
+        <p><em>${m.tweet}</em></p>
+      </div>
+    `).join("");
+  }
+  </script>
+</body>
+</html>
