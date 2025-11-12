@@ -1,0 +1,9 @@
+name: CI/CD
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install -r services/feature-002-ai-predictor/requirements.txt
+      - run: pytest services/feature-002-ai-predictor/tests/
