@@ -165,4 +165,12 @@ git push origin feature-002-ai-predictor
 - Deployment: Ready for GitHub secrets -> Vercel CI trigger
 - Next: Validate CI/CD pipeline, improve AI prompts, frontend UX
 
+## Session Vars & Memory Update (Önemli)
+
+- Her push sonrası şuları unutmayın:
+  - `memory/context.md` içindeki `CURRENT_SESSION` ve `SESSION_NOTES` alanlarını güncelleyin: tarih, yapılan commitler, CI run sonucu, eklenen secrets.
+  - `.env.example` oluşturulmadıysa oluşturun ve gerekli anahtarların isimlerini buraya yazın (değerleri boş bırakın). Gerçek secret'ları eklemeyin.
+  - `SESSION_VARS.md` dosyasını kontrol edin (repo kökünde). Yeni secret eklediğinizde bu dosyaya kısa not ekleyin.
+
+Bu adımlar sonraki asistanların onboarding'ını kolaylaştırır ve CI/Secrets durumunu takip etmeye yardımcı olur.
 ---
