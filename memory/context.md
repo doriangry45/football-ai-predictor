@@ -4,7 +4,7 @@
 **Current Feature**: 002-ai-predictor  
 **Status**: Ready for Deployment (CI/Vercel)  
 **Account**: doriangry45 (New Account)
-**Last Updated**: 13 Nov 2025 (Session 1)
+**Last Updated**: 13 Nov 2025 (Session 2)
 
 ## Active Feature
 
@@ -52,6 +52,17 @@ Feature Structure:
 - ✅ CI/CD Pipeline (GitHub Actions)
 - ✅ Deployment Config (Docker + Vercel)
 - ⏳ CI Validation (waiting for main merge)
+
+## Session Updates
+
+- **Session 1 (13 Nov 2025)**: Import errors resolved, stubs added, Docker/Vercel/CI configured, tests passing locally (3/3). Feature branch merged to `main`.
+- **Session 2 (13 Nov 2025)**: Fixed `ci-cd.yml` workflow to set up Python and use `python -m pip`, added `SESSION_VARS.md` and `.env.example`, updated `TODO_NEXT_AGENT.md` to remind next assistant to update session vars and `memory/context.md`. Pushed commits and triggered GitHub Actions; monitor Actions for test job result.
+
+## Session Notes (Action Items Completed)
+
+- Added `.env.example` with required keys (do not store real secrets).
+- Created `SESSION_VARS.md` to document env var handling and update steps.
+- Reminder: After adding secrets in GitHub, re-run the workflow via Actions UI if necessary.
 
 ## Environment Variables Required
 
