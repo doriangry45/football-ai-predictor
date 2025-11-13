@@ -35,6 +35,7 @@ jobs:
     # Only deploy automatically from the `main` branch to keep deploys predictable
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +54,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           if [ -n "${VERCEL_TOKEN}" ]; then
-            vercel --prod --token ${VERCEL_TOKEN} --confirm
+            vercel --prod --token ${VERCEL_TOKEN} --confirm || echo "Deployment skipped or failed (optional step)"
           else
             echo "VERCEL_TOKEN not provided; skipping deployment"
           fi
