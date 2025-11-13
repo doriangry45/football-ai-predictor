@@ -1,120 +1,45 @@
+[//]: # (Auto-generated concise Copilot instructions tailored for this repo.)
 # Copilot AI Instructions
 
-You are building **Feature 002: AI Predictions** for the football-ai-predictor project.
+Purpose: Provide immediate, actionable guidance for AI coding agents working on Feature 002 (AI Predictions).
 
-## 🎯 Primary Objectives
-
-1. **Gemini 2.5 Pro Integration** - Use for football match analysis and predictions
-2. **RapidAPI with Key Rotation** - 2 keys with automatic failover
-3. **Rate Limiting** - Redis-based daily limits (900/key out of 1000)
-4. **Multi-Layer Caching** - Redis (fast) + Supabase (persistent)
-5. **Error Resilience** - Graceful degradation when services unavailable
-
-## 🏗️ Architecture Pattern
-
-```
-Feature Files:
-├── services/feature-002-ai-predictor/
-│   ├── main.py              (EFootballFetcher class)
-│   ├── app.py               (Flask + AI logic)
-│   ├── requirements.txt      (Dependencies with versions)
-│   └── tests/test_predictor.py
-├── templates/predict.html   (Web dashboard)
-├── supabase/schema.sql      (Database tables)
-└── All docs include SPECPULSE_METADATA headers
+Quick Start (Windows PowerShell):
+```powershell
+python -m venv .venv; .\.venv\Scripts\Activate; pip install -r services/feature-002-ai-predictor/requirements.txt
+python services/feature-002-ai-predictor/app.py
+pytest tests/test_predictor.py
 ```
 
-## 🔧 Technology Stack
+Key files & flows:
+- **Fetcher**: `services/feature-002-ai-predictor/main.py` (RapidAPI client + key rotation)
+- **App**: `services/feature-002-ai-predictor/app.py` (Flask routes, `/api/predict` used by `templates/predict.html`)
+- **UI**: `templates/predict.html` (fetches `POST /api/predict`, render cards)
+- **Tests**: `tests/test_predictor.py` (unit/integration examples)
+- **DB/Schema**: `supabase/schema.sql` (persistent cache / tables)
 
-- **Framework**: Flask 2.3.3
-- **AI**: google-generativeai (Gemini 2.5 Pro)
-- **API**: RapidAPI (api-football-v1)
-- **Cache**: redis 5.0.0
-- **Database**: supabase 2.3.4
-- **Testing**: pytest 7.4.2
+Project-specific conventions:
+- Feature directories are prefixed with `feature-###-slug` under `services/` and `plans/`.
+- Spec/plans include a `SPECPULSE_METADATA` header—preserve it when editing specs.
+- Secrets live in root `.env` (or local env); never commit secrets. Environment vars used: `RAPIDAPI_KEY1`, `RAPIDAPI_KEY2`, `RAPIDAPI_KEY`, `GOOGLE_AI_API_KEY`, `REDIS_URL`, `SUPABASE_URL`, `SUPABASE_KEY`.
+- Branch naming: use `feature-002-ai-predictor` / `feature-*` for feature work.
 
-## 🔑 Configuration & Secrets
+Integration points to check before changes:
+- RapidAPI: header `X-RapidAPI-Key` and host `api-football-v1.p.rapidapi.com` (see `specs/` or `spec.yaml` in sibling repo).
+- Google Generative AI: key in `GOOGLE_AI_API_KEY` (Gemini integration lives in `app.py`).
+- Redis and Supabase: caching layers (fast+persistent). Inspect code for fallback logic in `main.py` and `app.py`.
 
-**Environment Variables:**
-```env
-RAPIDAPI_KEY1=your_first_key
-RAPIDAPI_KEY2=your_second_key
-RAPIDAPI_KEY=fallback_key
+Agent workflow (required):
+- Use `apply_patch` to edit files (preserve style). Do NOT output raw diffs as final — apply edits.
+- Track progress with `manage_todo_list` (one item `in-progress` at a time). Mark completed as you finish steps.
+- Run unit tests in `tests/` locally after changes. If adding runnable code, include/update `requirements.txt` and a short README in the feature folder.
 
-GOOGLE_AI_API_KEY=your_gemini_key
+Testing & debug tips:
+- Run `pytest tests/test_predictor.py::test_api_health -v` for targeted checks.
+- Use `print`/logging in `services/feature-002-ai-predictor/app.py` to trace incoming `/api/predict` requests; `templates/predict.html` expects JSON { matches: [...] }.
 
-REDIS_URL=redis://localhost:6379  (optional)
-SUPABASE_URL=https://...          (optional)
-SUPABASE_KEY=your_key             (optional)
-```
+When merging or updating this file:
+- Keep the guidance short and concrete. Reference the exact files above for examples.
+- Preserve any SPECPULSE metadata blocks in `plans/` and `specs/` files.
+- Don't add or expose secrets; reference environment variable names only.
 
-## 📋 Implementation Checklist
-
-### Core Features
-- [x] RapidAPI fetcher with error handling
-- [x] Gemini 2.5 Pro integration
-- [x] Rate limiting with Redis
-- [x] Multi-layer caching (Redis + Supabase)
-- [x] Web dashboard (Flask + HTML)
-- [x] Database schema (PostgreSQL)
-
-### Quality Assurance
-- [ ] Unit tests (pytest) - ALL PASSING
-- [ ] Integration tests
-- [ ] Error scenario testing
-- [ ] Performance benchmarking
-
-### Documentation
-- [x] GUIDE.md - Comprehensive guide
-- [x] ONBOARDING.md - New contributor guide
-- [x] README.md - Project overview
-- [ ] API documentation
-- [ ] Feature specifications
-
-## 🚀 Deployment Pattern
-
-```bash
-# Local Development
-python app.py
-
-# Production (Docker)
-docker build -t football-ai-predictor .
-docker run -p 5000:5000 --env-file .env football-ai-predictor
-```
-
-## 🧪 Testing Pattern
-
-```bash
-# Run all tests
-pytest tests/
-
-# Run specific test
-pytest tests/test_predictor.py::test_api_health -v
-
-# Generate coverage report
-pytest --cov=services/feature-002-ai-predictor tests/
-```
-
-## 🔗 Git Workflow
-
-```bash
-# Create feature branch
-git checkout -b feature-002-improvements
-
-# Make changes
-git add .
-git commit -m "feat: Improve AI predictions accuracy"
-
-# Push to remote
-git push origin feature-002-improvements
-
-# Create Pull Request to main
-```
-
-## 📝 Key Files
-
-- **Fetcher**: `services/feature-002-ai-predictor/main.py`
-- **App Logic**: `services/feature-002-ai-predictor/app.py`
-- **Tests**: `services/feature-002-ai-predictor/tests/test_predictor.py`
-- **Database**: `supabase/schema.sql`
-- **Context**: `memory/context.md`
+If anything here is unclear or you want this expanded (e.g., CI config or a runnable Dockerfile), tell me which area to expand.

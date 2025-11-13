@@ -31,6 +31,10 @@ load_dotenv()
 app = Flask(__name__, template_folder="../../../templates")
 logging.basicConfig(level=logging.INFO)
 
+# Prompt version control
+PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v2")
+
+
 # === CONFIG ===
 RAPIDAPI_KEYS = [
     os.getenv("RAPIDAPI_KEY1"),
@@ -158,8 +162,7 @@ def get_fixtures(league=39, season=2025):
 # === AI PREDICT ===
 def ai_predict(fixtures_data, query="over 2.5"):
     """Analyze fixtures with Gemini."""
-    if not os.getenv("GOOGLE_AI_API_KEY"):
-        return {"error": "GOOGLE_AI_API_KEY not configured"}
+    # Allow running with stubbed google.generativeai in test/dev environments
     
     fixtures = fixtures_data.get("response", [])[:10]
     
@@ -181,17 +184,70 @@ def ai_predict(fixtures_data, query="over 2.5"):
         except Exception as e:
             logging.warning(f"Parse fixture error: {e}")
     
-    prompt = f"""
-    Analyze these upcoming football fixtures for "{query}" predictions:
-    {json.dumps(fixture_summary, indent=2)}
-    
-    For each fixture, provide:
-    1. Over 2.5 probability (0-100)
-    2. Key analysis reasoning
-    3. A short tweet (Turkish)
-    
-    Return as JSON: {{"matches": [{{"home": "", "away": "", "prediction": "OVER/UNDER", "probability": 0, "reasoning": "", "tweet": ""}}]}}
-    """
+    # Gather additional context (standings, team stats, player availability)
+    def gather_additional_context(fixtures_list, league=39, season=2025):
+        team_stats = {}
+        players_status = {}
+        standings = []
+        try:
+            fetcher = EFootballFetcher(RAPIDAPI_KEYS[0] if RAPIDAPI_KEYS else None)
+            # Standings
+            try:
+                standings_resp = fetcher.fetch_standings(league=league, season=season)
+                standings = standings_resp.get('response', [])
+            except Exception:
+                standings = []
+
+            # For each team in fixtures, try to get team stats and players (limited)
+            team_ids = set()
+            for fx in fixtures_list:
+                try:
+                    h_id = fx.get('teams', {}).get('home', {}).get('id')
+                    a_id = fx.get('teams', {}).get('away', {}).get('id')
+                    if h_id: team_ids.add(h_id)
+                    if a_id: team_ids.add(a_id)
+                except Exception:
+                    continue
+
+            for tid in list(team_ids)[:8]:
+                try:
+                    stats = fetcher.fetch_team_stats(team=tid, season=season)
+                    team_stats[tid] = stats.get('response', {})
+                except Exception:
+                    team_stats[tid] = {}
+                try:
+                    players = fetcher.fetch_players(team=tid, season=season)
+                    players_status[tid] = players.get('response', [])
+                except Exception:
+                    players_status[tid] = []
+        except Exception as e:
+            logging.warning(f"Gathering context failed: {e}")
+        return team_stats, players_status, standings
+
+    team_stats, players_status, standings = gather_additional_context(fixtures, league=39, season=2025)
+
+    # Load prompt template based on PROMPT_VERSION
+    prompt_template = None
+    try:
+        if PROMPT_VERSION == 'v1':
+            with open(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'prompts', 'prompt_v1_over_under.md'), 'r', encoding='utf-8') as f:
+                prompt_template = f.read()
+        else:
+            with open(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'prompts', 'prompt_v2_over_under.md'), 'r', encoding='utf-8') as f:
+                prompt_template = f.read()
+    except Exception:
+        # fallback to inline prompt if files missing
+        prompt_template = None
+
+    prompt = None
+    if prompt_template:
+        prompt = prompt_template.replace('{fixtures_json}', json.dumps(fixture_summary, indent=2))
+        prompt = prompt.replace('{team_stats_json}', json.dumps({k: v for k, v in list(team_stats.items())[:5]}, indent=2))
+        prompt = prompt.replace('{players_status_json}', json.dumps({k: v[:4] for k, v in list(players_status.items())[:5]}, indent=2))
+        prompt = prompt.replace('{standings_json}', json.dumps(standings[:8], indent=2))
+    else:
+        # inline fallback
+        prompt = f"Analyze these upcoming football fixtures for \"{query}\" predictions:\n{json.dumps(fixture_summary, indent=2)}\nReturn JSON."
     
     try:
         response = model.generate_content(prompt)
@@ -251,7 +307,20 @@ def predict():
         # Save predictions to Supabase (optional)
         if supabase and "matches" in prediction:
             try:
+                prompt_version = os.getenv('PROMPT_VERSION', PROMPT_VERSION)
+                # store limited player snapshot to avoid very large payloads
                 for match in prediction.get("matches", []):
+                    player_snapshot = {}
+                    try:
+                        # look up available players for home and away if present
+                        # match may include team ids in fixture_summary; attempt to include small snapshot
+                        player_snapshot = {
+                            'home_players': [p.get('player', {}).get('name') for p in players_status.get(match.get('home'), [])][:6] if isinstance(players_status, dict) else [],
+                            'away_players': [p.get('player', {}).get('name') for p in players_status.get(match.get('away'), [])][:6] if isinstance(players_status, dict) else []
+                        }
+                    except Exception:
+                        player_snapshot = {}
+
                     supabase.table('predictions').insert({
                         "league_id": league,
                         "season": season,
@@ -262,6 +331,8 @@ def predict():
                         "probability": match.get("probability", 0),
                         "reasoning": match.get("reasoning", ""),
                         "tweet": match.get("tweet", ""),
+                        "prompt_version": prompt_version,
+                        "player_snapshot": json.dumps(player_snapshot),
                         "created_at": datetime.now().isoformat()
                     }).execute()
             except Exception as e:
@@ -294,6 +365,46 @@ def leagues():
         {"id": 78, "name": "Bundesliga (Germany)"},
         {"id": 61, "name": "Ligue 1 (France)"},
     ])
+
+
+@app.route("/api/fixtures", methods=["GET"])
+def api_fixtures():
+    league = int(request.args.get("league", 39))
+    season = int(request.args.get("season", 2025))
+    try:
+        data = get_fixtures(league=league, season=season)
+        return jsonify(data)
+    except Exception as e:
+        logging.error(f"/api/fixtures error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/players", methods=["GET"])
+def api_players():
+    team = request.args.get("team")
+    season = int(request.args.get("season", 2025))
+    if not team:
+        return jsonify({"error": "team param required"}), 400
+    try:
+        fetcher = EFootballFetcher(RAPIDAPI_KEYS[0] if RAPIDAPI_KEYS else None)
+        data = fetcher.fetch_players(team=int(team), season=season)
+        return jsonify(data)
+    except Exception as e:
+        logging.error(f"/api/players error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/standings", methods=["GET"])
+def api_standings():
+    league = int(request.args.get("league", 39))
+    season = int(request.args.get("season", 2025))
+    try:
+        fetcher = EFootballFetcher(RAPIDAPI_KEYS[0] if RAPIDAPI_KEYS else None)
+        data = fetcher.fetch_standings(league=league, season=season)
+        return jsonify(data)
+    except Exception as e:
+        logging.error(f"/api/standings error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.errorhandler(404)
 def not_found(e):

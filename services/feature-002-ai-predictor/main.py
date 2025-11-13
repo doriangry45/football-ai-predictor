@@ -59,3 +59,20 @@ class EFootballFetcher:
         response = requests.get(url, headers=self.headers, params=params, timeout=30)
         response.raise_for_status()
         return response.json()
+
+    def fetch_players(self, team: int, season: int = 2025) -> Dict[str, Any]:
+        """Fetch players for a team (current season)."""
+        params = {"team": team, "season": season}
+        url = f"{self.BASE_URL}/players"
+        response = requests.get(url, headers=self.headers, params=params, timeout=30)
+        response.raise_for_status()
+        return response.json()
+
+    def fetch_team_stats(self, team: int, season: int = 2025) -> Dict[str, Any]:
+        """Fetch aggregated team statistics (if available)."""
+        # Some RapidAPI endpoints provide team statistics under /teams/statistics
+        params = {"team": team, "season": season}
+        url = f"{self.BASE_URL}/teams/statistics"
+        response = requests.get(url, headers=self.headers, params=params, timeout=30)
+        response.raise_for_status()
+        return response.json()

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, feature-002-ai-predictor ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f services/feature-002-ai-predictor/requirements.txt ]; then pip install -r services/feature-002-ai-predictor/requirements.txt; fi
+          pip install pytest
+
+      - name: Run tests
+        run: pytest -q
+
+  deploy:
+    needs: tests
+    # Only deploy automatically from the `main` branch to keep deploys predictable
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node (for Vercel CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@28 || npm install -g vercel
+
+      - name: Deploy to Vercel (optional)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "${VERCEL_TOKEN}" ]; then
+            vercel --prod --token ${VERCEL_TOKEN} --confirm
+          else
+            echo "VERCEL_TOKEN not provided; skipping deployment"
+          fi
