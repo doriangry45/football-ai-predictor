@@ -58,6 +58,16 @@ Feature Structure:
 - **Session 1 (13 Nov 2025)**: Import errors resolved, stubs added, Docker/Vercel/CI configured, tests passing locally (3/3). Feature branch merged to `main`.
 - **Session 2 (13 Nov 2025)**: Fixed `ci-cd.yml` workflow to set up Python and use `python -m pip`, added `SESSION_VARS.md` and `.env.example`, updated `TODO_NEXT_AGENT.md` to remind next assistant to update session vars and `memory/context.md`. Pushed commits and triggered GitHub Actions; monitor Actions for test job result.
 
+ - **Session 3 (15 Nov 2025)**: Local dev fixes and demo mode work
+	 - Fixed `.env` formatting problems that caused dotenv parse errors.
+	 - Made console output ASCII-safe (removed problematic Unicode icons).
+	 - Added `DEMO_MODE` env var and ensured demo/mock responses are returned when external API fetch fails (temporary demo-friendly fallback).
+	 - Fixed `TEMPLATE_DIR` path so `predict.html` loads reliably (corrected to point to repo `templates/`). Root UI now returns HTTP 200 and renders `predict.html`.
+	 - Disabled Werkzeug reloader by default and added `DEV_MODE=1` to enable reloader when needed.
+	 - Committed and pushed changes to `main`.
+
+Note: After every session I update `memory/context.md` and `TODO_NEXT_AGENT.md` with the latest session notes so future assistants can pick up where we left off.
+
 ## Session Notes (Action Items Completed)
 
 - Added `.env.example` with required keys (do not store real secrets).

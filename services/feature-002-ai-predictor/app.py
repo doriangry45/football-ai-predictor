@@ -305,9 +305,9 @@ def predict():
         season = data.get("season", 2025)
         query = data.get("query", "over 2.5")
         
-        # DEMO MODE: If forced by env or no API keys, return mock data
-        if DEMO_MODE or not RAPIDAPI_KEYS:
-            logging.warning("Demo mode: no API keys, returning mock data")
+        # DEMO MODE: Only return mock data when explicitly enabled with DEMO_MODE=1
+        if DEMO_MODE:
+            logging.warning("Demo mode enabled: returning mock data")
             return jsonify({
                 "matches": [
                     {
@@ -335,11 +335,12 @@ def predict():
         
         # Get fixtures
         fixtures = get_fixtures(league, season)
-        # If fetching fixtures failed, fallback to demo data when DEMO_MODE is enabled
+        # If fetching fixtures failed, fallback to demo data only when DEMO_MODE is enabled
         if "errors" in fixtures and not fixtures.get("response"):
             logging.warning("Fixtures fetch failed: %s", fixtures.get('errors'))
-            logging.info("Returning mock fixtures due to fetch failure")
-            return jsonify({
+            if DEMO_MODE:
+                logging.info("DEMO_MODE active — returning mock fixtures")
+                return jsonify({
                     "matches": [
                         {
                             "home": "Manchester United",
@@ -348,7 +349,7 @@ def predict():
                             "probability": 72,
                             "reasoning": "Strong attacking teams, historical high-scoring matches",
                             "tournament_note": "Premier League - High Priority",
-                            "tweet": "Man Utd vs Liverpool: Over 2.5 likely (72%) 🔴⚽ Expect attacking display #BetTips"
+                            "tweet": "Man Utd vs Liverpool: Over 2.5 likely (72%) Expect attacking display #BetTips"
                         }
                     ],
                     "prompt_version": PROMPT_VERSION,
