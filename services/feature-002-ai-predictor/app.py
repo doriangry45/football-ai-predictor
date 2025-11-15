@@ -333,7 +333,26 @@ def predict():
         
         # Get fixtures
         fixtures = get_fixtures(league, season)
+        # If fetching fixtures failed, fallback to demo data when DEMO_MODE is enabled
         if "errors" in fixtures and not fixtures.get("response"):
+            logging.warning("Fixtures fetch failed: %s", fixtures.get('errors'))
+            if DEMO_MODE:
+                logging.info("DEMO_MODE active — returning mock fixtures")
+                return jsonify({
+                    "matches": [
+                        {
+                            "home": "Manchester United",
+                            "away": "Liverpool",
+                            "prediction": "Over 2.5",
+                            "probability": 72,
+                            "reasoning": "Strong attacking teams, historical high-scoring matches",
+                            "tournament_note": "Premier League - High Priority",
+                            "tweet": "Man Utd vs Liverpool: Over 2.5 likely (72%) 🔴⚽ Expect attacking display #BetTips"
+                        }
+                    ],
+                    "prompt_version": PROMPT_VERSION,
+                    "demo_mode": True
+                })
             return jsonify({"error": "No fixtures available"}), 503
         
         # AI prediction
