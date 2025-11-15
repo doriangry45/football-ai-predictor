@@ -377,7 +377,7 @@ def predict():
                     except Exception:
                         player_snapshot = {}
 
-                    supabase.table('predictions').insert({
+                    supabase.table('ai_predictions').insert({
                         "league_id": league,
                         "season": season,
                         "home_team": match.get("home", ""),

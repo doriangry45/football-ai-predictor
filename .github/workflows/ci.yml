@@ -44,17 +44,37 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Create .env from secrets (if available)
+        env:
+          RAPIDAPI_KEY1: ${{ secrets.RAPIDAPI_KEY1 }}
+          RAPIDAPI_KEY2: ${{ secrets.RAPIDAPI_KEY2 }}
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
+          cat > .env << EOF
+          RAPIDAPI_KEY1=${RAPIDAPI_KEY1}
+          RAPIDAPI_KEY2=${RAPIDAPI_KEY2}
+          GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+          SUPABASE_URL=${SUPABASE_URL}
+          SUPABASE_KEY=${SUPABASE_KEY}
+          REDIS_URL=${REDIS_URL}
+          PROMPT_VERSION=v2
+          DEMO_MODE=0
+          EOF
+
       - name: Install Vercel CLI
         run: npm install -g vercel@28 || npm install -g vercel
 
-      - name: Deploy to Vercel (optional)
+      - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          if [ -n "${VERCEL_TOKEN}" ]; then
-            vercel --prod --token ${VERCEL_TOKEN} --confirm || echo "Deployment skipped or failed (optional step)"
-          else
-            echo "VERCEL_TOKEN not provided; skipping deployment"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "⚠ VERCEL_TOKEN not set, skipping deployment"
+            exit 0
           fi
+          vercel --prod --token ${VERCEL_TOKEN} --confirm || echo "Deployment failed or skipped"
