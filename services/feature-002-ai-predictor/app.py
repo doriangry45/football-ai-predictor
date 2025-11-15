@@ -35,7 +35,7 @@ from main import EFootballFetcher
 # === INIT ===
 load_dotenv()
 # Use an absolute template folder path (resolve relative to this file)
-TEMPLATE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'templates'))
+TEMPLATE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'templates'))
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 logging.basicConfig(level=logging.INFO)
 
