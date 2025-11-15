@@ -303,8 +303,8 @@ def predict():
         season = data.get("season", 2025)
         query = data.get("query", "over 2.5")
         
-        # DEMO MODE: If no API keys, return mock data
-        if not RAPIDAPI_KEYS:
+        # DEMO MODE: If forced by env or no API keys, return mock data
+        if DEMO_MODE or not RAPIDAPI_KEYS:
             logging.warning("Demo mode: no API keys, returning mock data")
             return jsonify({
                 "matches": [
