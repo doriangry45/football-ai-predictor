@@ -70,11 +70,6 @@ Note: After every session I update `memory/context.md` and `TODO_NEXT_AGENT.md` 
 
 ## Session Notes (Action Items Completed)
 
-- Added `.env.example` with required keys (do not store real secrets).
-- Created `SESSION_VARS.md` to document env var handling and update steps.
-- Reminder: After adding secrets in GitHub, re-run the workflow via Actions UI if necessary.
-
-## Environment Variables Required
 
 ```env
 RAPIDAPI_KEY1=your_key_1
