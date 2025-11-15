@@ -4,11 +4,17 @@ Flask Web UI for E-Football AI Predictor
 Uses Gemini 2.5 Pro for match analysis with RapidAPI data
 """
 import os
+import sys
 import json
 import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify
+
+# Ensure repository root is on sys.path so local stubs (e.g., `google`) import
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
 
 # AI & Storage imports
 import google.generativeai as genai
@@ -33,6 +39,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Prompt version control
 PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v2")
+DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 
 
 # === CONFIG ===
@@ -296,6 +303,34 @@ def predict():
         season = data.get("season", 2025)
         query = data.get("query", "over 2.5")
         
+        # DEMO MODE: If no API keys, return mock data
+        if not RAPIDAPI_KEYS:
+            logging.warning("Demo mode: no API keys, returning mock data")
+            return jsonify({
+                "matches": [
+                    {
+                        "home": "Manchester United",
+                        "away": "Liverpool",
+                        "prediction": "Over 2.5",
+                        "probability": 72,
+                        "reasoning": "Strong attacking teams, historical high-scoring matches",
+                        "tournament_note": "Premier League - High Priority",
+                        "tweet": "Man Utd vs Liverpool: Over 2.5 likely (72%) 🔴⚽ Expect attacking display #BetTips"
+                    },
+                    {
+                        "home": "Manchester City",
+                        "away": "Arsenal",
+                        "prediction": "Under 2.5",
+                        "probability": 65,
+                        "reasoning": "Defensive solidity, paced tempo control",
+                        "tournament_note": "Premier League - High Priority",
+                        "tweet": "City vs Arsenal: Under 2.5 lean (65%) ⚪🔵 Tight tactical battle expected"
+                    }
+                ],
+                "prompt_version": PROMPT_VERSION,
+                "demo_mode": True
+            })
+        
         # Get fixtures
         fixtures = get_fixtures(league, season)
         if "errors" in fixtures and not fixtures.get("response"):
@@ -415,15 +450,15 @@ def server_error(e):
     return jsonify({"error": "Server error"}), 500
 
 if __name__ == "__main__":
-    print("\n⚡ E-Football AI Predictor")
-    print(f"✓ API Keys: {len(RAPIDAPI_KEYS)}")
-    print(f"✓ Redis: {bool(r)}")
-    print(f"✓ Supabase: {bool(supabase)}")
-    print(f"✓ Google AI: {bool(os.getenv('GOOGLE_AI_API_KEY'))}")
-    print("\n🚀 Running on http://localhost:5000")
-    print("📊 Dashboard: http://localhost:5000")
-    print("🔗 API: /api/predict (POST)")
-    print("🏥 Health: /api/health (GET)\n")
-    
-    app.run(debug=True, host="0.0.0.0", port=5000)
-    app.run(debug=True, port=5000)
+    print("\n[*] E-Football AI Predictor")
+    print(f"[OK] API Keys: {len(RAPIDAPI_KEYS)}")
+    print(f"[OK] Redis: {bool(r)}")
+    print(f"[OK] Supabase: {bool(supabase)}")
+    print(f"[OK] Google AI: {bool(os.getenv('GOOGLE_AI_API_KEY'))}")
+    print("\n[START] Running on http://localhost:5000")
+    print("[INFO] Dashboard: http://localhost:5000")
+    print("[INFO] API: /api/predict (POST)")
+    print("[INFO] Health: /api/health (GET)\n")
+    # Run without the automatic reloader by default to avoid noisy restarts
+    dev_mode = os.getenv("DEV_MODE", "0") == "1"
+    app.run(debug=dev_mode, use_reloader=dev_mode, host="0.0.0.0", port=5000)
