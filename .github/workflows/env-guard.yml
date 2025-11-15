@@ -1,0 +1,22 @@
+name: Prevent committed .env
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for committed .env
+        run: |
+          if [ -f .env ]; then
+            echo "ERROR: .env file is present in the repository root. Remove it and use GitHub Secrets instead.";
+            echo "Run locally: git rm --cached .env && git commit -m 'chore: remove .env from repo'";
+            exit 1;
+          else
+            echo ".env not present — OK.";
+          fi
