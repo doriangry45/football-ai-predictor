@@ -1,10 +1,6 @@
 {
-  "buildCommand": "echo 'Using Dockerfile for build'",
-  "outputDirectory": ".",
-  "devCommand": "python services/feature-002-ai-predictor/app.py",
   "projectSettings": {
     "framework": "other",
-    "sourceFilesOutsideRootDirectory": true,
-    "nodeVersion": "18.x"
+    "sourceFilesOutsideRootDirectory": true
   }
 }
