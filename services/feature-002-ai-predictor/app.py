@@ -336,9 +336,8 @@ def predict():
         # If fetching fixtures failed, fallback to demo data when DEMO_MODE is enabled
         if "errors" in fixtures and not fixtures.get("response"):
             logging.warning("Fixtures fetch failed: %s", fixtures.get('errors'))
-            if DEMO_MODE:
-                logging.info("DEMO_MODE active — returning mock fixtures")
-                return jsonify({
+            logging.info("Returning mock fixtures due to fetch failure")
+            return jsonify({
                     "matches": [
                         {
                             "home": "Manchester United",
